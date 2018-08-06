@@ -1,0 +1,15 @@
+
+(library
+  (name calculator)
+  (public_name calculator)
+  (modules calc_lexer tree calc_parser)
+  (flags (:standard -warn-error +a-52))
+  (libraries)
+)
+
+(executable
+  (name calc)
+  (public_name calc)
+  (libraries calculator)
+  (modules calc)
+)

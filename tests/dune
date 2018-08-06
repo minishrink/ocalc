@@ -1,0 +1,11 @@
+(executable
+  (name calc_test)
+  (libraries
+    alcotest
+    calculator)
+  (modules
+    calc_expr
+    calc_test)
+  (flags (:standard -warn-error +a-52))
+)
+
