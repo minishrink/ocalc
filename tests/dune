@@ -1,5 +1,7 @@
 (executable
   (name calc_test)
+  (public_name calc_test)
+  (package calc_test)
   (libraries
     alcotest
     calculator)

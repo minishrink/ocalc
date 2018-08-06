@@ -25,4 +25,4 @@ clean:
 reindent:
 	ocp-indent -i **/*.ml*
 
-.PHONY: all calc test test-results clean reindent
+.PHONY: all calc test clean reindent
