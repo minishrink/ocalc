@@ -33,7 +33,7 @@ let simple_tree x o y = build ~left:(build x ()) o ~right:(build y ()) ()
 let singleroot x = build x ()
 
 (* FIXME still shit *)
-let rec eval = function
+let rec parse = function
   | [] -> Empty
   | [ Num _ as j ] -> singleroot j
   | [ Num _ as n ; Op _ as o ; Num _ as p ] -> simple_tree n o p
@@ -43,16 +43,16 @@ let rec eval = function
         build
           ~left:(simple_tree x op y)
           nxt_op
-          ~right:(eval rest)
+          ~right:(parse rest)
           ()
-      | rest -> eval rest
+      | rest -> print_endline "whoops, fell through!"; parse rest
     end
   | lst -> failwith
              (Printf.sprintf
                 "Could not parse tokens: %s"
                 (List.map Calc.string_of lst |> String.concat ","))
 
-let parse ast =
+let evaluate ast =
   let open CP in
   let open L in
   let rec eval = function
@@ -61,16 +61,16 @@ let parse ast =
     | _, _, _ -> failwith ("could not parse: " ^ (string_of ast))
   in Value (ast |> split |> eval)
 
-let parse_and_print tree =
+let eval_and_print tree =
   tree
-  |> parse
+  |> evaluate
   |> string_of_val
   |> fun s -> print_endline (Printf.sprintf "\t\t\t%s" s)
 
 let build_tree lst =
   if (List.length lst) mod 2 = 0 then
     failwith "FAULTY EXPR: only expecting odd number of tokens";
-  lst (* |> List.rev *) |> eval
+  parse lst
 
 let test string =
   string
@@ -78,6 +78,6 @@ let test string =
   |> List.map (function | L.Monad.Success x -> x | _ -> failwith "FUCK")
   |> build_tree
 
-let parse_test s = test s |> parse
-let print_test s = test s |> parse_and_print
+let parse_test s = test s |> evaluate
+let print_test s = test s |> eval_and_print
 
