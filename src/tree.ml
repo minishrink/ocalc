@@ -10,19 +10,12 @@ module Make(T : Branch) = struct
     | Node of (tree * T.t * tree)
 
   let rec string_of = function
-    | Empty -> "_"
-    | Node (Empty, mid, Empty) ->
-      Printf.sprintf "Node(%s)"
-        (T.string_of mid)
-    | Node (Empty, mid, right) ->
-      Printf.sprintf "Node((%s) --> %s)"
-        (T.string_of mid) (string_of right)
-    | Node (left, mid, Empty) ->
-      Printf.sprintf "(%s <-- Node(%s))"
-        (string_of left) (T.string_of mid)
-    | Node (left, mid, right) ->
-      Printf.sprintf "(%s <-- Node(%s) --> %s)"
-        (string_of left) (T.string_of mid) (string_of right)
+    | Empty -> ""
+    | Node(Empty, x, Empty) ->
+      Printf.sprintf "(%s)" (T.string_of x)
+    | Node(l, m, r) ->
+      Printf.sprintf "(%s %s %s)"
+        (T.string_of m) (string_of l) (string_of r)
 
   let build ?(left=Empty) (middle : T.t) ?(right=Empty) () =
     Node (left, middle, right)
@@ -63,5 +56,6 @@ module Make(T : Branch) = struct
     let left_depth = depth 0 get_left tree in
     let right_depth = depth 0 get_right tree in
     max left_depth right_depth
+
 end
 

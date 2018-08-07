@@ -42,15 +42,12 @@ module Monad = struct
 end
 open Monad
 
-type number =
-  | Int of int
-  | Float of float
 
 exception Lexing_error of string
 let fail_lex _loc_ str = raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_))
 
 type operand = Add | Sub | Div | Mult
-type token = Num of number | Op of operand
+type token = Num of float | Op of operand
 type lex_result = Token of token | Error of string
 
 let get_operand str =
@@ -63,7 +60,7 @@ let get_operand str =
     | _ -> fail_lex __LOC__ str
   in
   try to_op str |> wrap_op with _ ->
-    fail_lex __LOC__ "get_operand failed"
+    fail_lex __LOC__ (Printf.sprintf "Failed to parse %s" str)
 
 let get_number str =
   let is_int str =
@@ -73,18 +70,16 @@ let get_number str =
     match H.string_to_char_lst str with
     | hd :: (_::_ as num) when hd='-' -> contains_only_numbers num
     | number -> contains_only_numbers number
-    (* FIXME check for negative numbers you idiot *)
   in
   try
     if is_int str
-    then succeed (Num(Int (int_of_string str)))
+    then succeed (Num (float_of_string str))
     else match String.split_on_char '.' str with
       | [num ; dem] when is_int num && is_int dem ->
-        succeed (Num(Float (float_of_string str)))
+        succeed (Num(float_of_string str))
       | _ -> fail (Lexing_error str)
   with
-  | Failure "int_of_string" -> fail_lex __LOC__ ("unrecognised symbol: " ^ str)
-  | e -> raise e
+  | e -> fail e
 
 let tokenise str =
   get_number str
@@ -95,13 +90,9 @@ let tokenise str =
 
 let return = function
   | Success a -> a
-  | Failure f -> fail f
+  | Failure f -> fail_lex __LOC__ f
 
 module Print = struct
-  let string_of_number = function
-    | Int i   -> Printf.sprintf "Int(%d)" i
-    | Float f -> Printf.sprintf "Float(%f)" f
-
   let string_of_operand = function
     | Add  -> "+"
     | Sub -> "-"
@@ -109,9 +100,8 @@ module Print = struct
     | Mult  -> "*"
 
   let string_of_token = function
-    | Token (Op x) -> Printf.sprintf "Op(%s)" (string_of_operand x)
-    | Token (Num x) -> Printf.sprintf "Num(%s)" (string_of_number x)
-    | Error s -> Printf.sprintf "Error(%s)" s
+    | (Op x) -> Printf.sprintf "(%s)" (string_of_operand x)
+    | (Num x) -> Printf.sprintf "(%s)" (string_of_float x)
 end
 
 let lex str =
