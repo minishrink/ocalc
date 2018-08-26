@@ -1,83 +1,106 @@
 module L = Calc_lexer
-module T = Tree
 
-module Calc = struct
-  type t = L.token
-  let string_of_operand = L.Print.string_of_operand
+type exp =
+  | Num   : float       -> exp
+  | EMul : exp * exp   -> exp
+  | EDiv : exp * exp   -> exp
+  | ESub : exp * exp   -> exp
+  | EAdd : exp * exp   -> exp
 
-  let string_of = L.Print.string_of_token
+let rec string_exp = function
+  | Num f ->
+    Printf.sprintf "Num(%s)" (string_of_float f)
+  | EMul (exp, f) ->
+    Printf.sprintf "EMul(%s, %s)" (string_exp exp) (string_exp f)
+  | EAdd (lexp, rexp) ->
+    Printf.sprintf "EAdd(%s, %s)" (string_exp lexp) (string_exp rexp)
+  | ESub (lexp, rexp) ->
+    Printf.sprintf "ESub(%s, %s)" (string_exp lexp) (string_exp rexp)
+  | EDiv (lexp, rexp) ->
+    Printf.sprintf "EDiv(%s, %s)" (string_exp lexp) (string_exp rexp)
 
-  let get_op = L.(function
-      | Add  -> ( +. )
-      | Sub  -> ( -. )
-      | Div  -> ( /. )
-      | Mult -> ( *. ))
-end
-module CP = T.Make(Calc)
 
-type value = Value of float
-let string_of_val = function
-  | Value f -> (string_of_float f)
+let to_n x = Num x
+let eval e =
+  let rec eval_exp = function
+    | Num f -> f
+    | EMul (x,y) -> ( *. ) (eval_exp x) (eval_exp y)
+    | EAdd (x,y) -> ( +. ) (eval_exp x) (eval_exp y)
+    | ESub (x,y) -> ( -. ) (eval_exp x) (eval_exp y)
+    | EDiv (x,y) -> ( /. ) (eval_exp x) (eval_exp y)
+  in e |> eval_exp |> to_n
 
-let tree_exp op x y =
-  CP.(build
-        ~left:(build x ())
-        (Op op)
-        ~right:(build y ())
-        ())
-
-open L
-open CP
-
-let simple_tree x o y = build ~left:(build x ()) o ~right:(build y ()) ()
-let singleroot x = build x ()
-
-(* FIXME still shit *)
-let rec parse = function
-  | [] -> Empty
-  | [ Num _ as j ] -> singleroot j
-  | [ Num _ as n ; Op _ as o ; Num _ as p ] -> simple_tree n o p
-  | (Num _ as x) :: (Op _ as op) :: (Num _ as y) :: rst ->
-    begin match rst with
-      | (Op _ as nxt_op) :: rest ->
-        build
-          ~left:(simple_tree x op y)
-          nxt_op
-          ~right:(parse rest)
-          ()
-      | rest -> print_endline "whoops, fell through!"; parse rest
-    end
-  | lst -> failwith
-             (Printf.sprintf
-                "Could not parse tokens: %s"
-                (List.map Calc.string_of lst |> String.concat ","))
-
-let evaluate ast =
-  let open CP in
+let parse token_list =
   let open L in
-  let rec eval = function
-    | Empty, Num x, Empty -> x
-    | Node x, Op o, Node y -> Calc.(get_op o) (eval x) (eval y)
-    | _, _, _ -> failwith ("could not parse: " ^ (string_of ast))
-  in Value (ast |> split |> eval)
+  let open Print in
+  let precedence = function
+    | Add | Sub -> 0
+    | Mul -> 1
+    | Div -> 2
+  in
+  let make_exp x y = function
+    | Add -> EAdd (x,y)
+    | Sub -> ESub (x,y)
+    | Div -> EDiv (x,y)
+    | Mul -> EMul (x,y)
+  in
+  let to_num = function
+    | Num f -> N f
+    | x -> failwith (Printf.sprintf "%s::[%s]" (string_exp x) (tknlst_to_str token_list))
+  in
 
-let eval_and_print tree =
-  tree
-  |> evaluate
-  |> string_of_val
-  |> fun s -> print_endline (Printf.sprintf "\t\t\t%s" s)
+  let rec reduce lvl = function
+    | (N n)::(Op o)::lst when (precedence o) = lvl ->
+      let lexp, rexp = reduce lvl lst in
+      make_exp (to_n n) lexp o, rexp
 
-let build_tree lst =
-  if (List.length lst) mod 2 = 0 then
-    failwith "FAULTY EXPR: only expecting odd number of tokens";
-  parse lst
+    | (N n)::(([] | (Op _)::_) as tokens) ->
+      to_n n, tokens
+    | x ->
+      failwith (Printf.sprintf "reduce (%d) [%s]" lvl (tknlst_to_str x))
+  in
 
-let test string =
+  let rec exp lvl = function
+    | [ N x ] -> to_n x
+
+    | (N x)::(Op o)::tokens when (precedence o) = lvl ->
+      make_exp (to_n x) (exp lvl tokens) o
+
+    | (N _)::(Op o)::_ as lst when (precedence o) > lvl ->
+      let lexp, token_list = reduce (precedence o) lst in
+      let num = lexp |> eval |> to_num in
+      let lvl = begin match token_list with
+        | Op o::_ -> precedence o
+        | _ -> lvl
+      end in
+      exp lvl (num::token_list)
+
+    | (N x)::((Op o)::_) as lst -> (* precedence o < lvl, clearly *)
+      make_exp (to_n x) (exp (precedence o) lst) o
+
+    | other -> failwith (Printf.sprintf "exp (precedence %d) [%s]" lvl (tknlst_to_str other))
+
+  in match token_list with
+  | [ N x ] -> to_n x
+  (* find precedence level *)
+  | (N _)::(Op o)::_ as list ->
+    exp (precedence o) list
+  | other -> failwith (Printf.sprintf "build_expr [%s]" (tknlst_to_str other))
+
+let get_float = function
+  | Num f -> f
+  | x -> failwith (Printf.sprintf "get_float (%s)" (string_exp x))
+
+let interpret string =
   string
   |> L.lex
-  |> List.map (function | L.Monad.Success x -> x | _ -> failwith "FUCK")
-  |> build_tree
+  |> List.map L.Monad.(function | Success x -> x | Failure _ -> failwith "fuck")
+  |> parse
+  |> eval
 
-let parse_test s = test s |> evaluate
-let print_test s = test s |> eval_and_print
+let display string =
+  string
+  |> interpret
+  |> string_exp
+  |> print_endline
 
