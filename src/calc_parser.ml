@@ -101,6 +101,7 @@ let interpret string =
 let display string =
   string
   |> interpret
-  |> string_exp
+  |> get_float |> string_of_float
+  |> Printf.sprintf " > %s"
   |> print_endline
 
