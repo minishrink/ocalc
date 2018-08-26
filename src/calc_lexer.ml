@@ -46,8 +46,8 @@ open Monad
 exception Lexing_error of string
 let fail_lex _loc_ str = raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_))
 
-type operand = Add | Sub | Div | Mult
-type token = Num of float | Op of operand
+type operand = Add | Sub | Div | Mul
+type token = N of float | Op of operand
 type lex_result = Token of token | Error of string
 
 let get_operand str =
@@ -56,11 +56,11 @@ let get_operand str =
     | "+" -> Add
     | "-" -> Sub
     | "/" -> Div
-    | "*" -> Mult
+    | "*" -> Mul
     | _ -> fail_lex __LOC__ str
   in
   try to_op str |> wrap_op with _ ->
-    fail_lex __LOC__ (Printf.sprintf "Failed to parse %s" str)
+    fail_lex __LOC__ (Printf.sprintf "Failed to lex %s" str)
 
 let get_number str =
   let is_int str =
@@ -73,10 +73,10 @@ let get_number str =
   in
   try
     if is_int str
-    then succeed (Num (float_of_string str))
+    then succeed (N (float_of_string str))
     else match String.split_on_char '.' str with
       | [num ; dem] when is_int num && is_int dem ->
-        succeed (Num(float_of_string str))
+        succeed (N(float_of_string str))
       | _ -> fail (Lexing_error str)
   with
   | e -> fail e
@@ -97,11 +97,15 @@ module Print = struct
     | Add  -> "+"
     | Sub -> "-"
     | Div   -> "/"
-    | Mult  -> "*"
+    | Mul  -> "*"
 
   let string_of_token = function
-    | (Op x) -> Printf.sprintf "(%s)" (string_of_operand x)
-    | (Num x) -> Printf.sprintf "(%s)" (string_of_float x)
+    | (Op x)  -> (string_of_operand x)
+    | (N x) -> (string_of_float x)
+
+  let tknlst_to_str of_list =
+    List.map string_of_token of_list
+    |> String.concat " "
 end
 
 let lex str =
