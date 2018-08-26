@@ -21,3 +21,9 @@ This program simply builds an interactive CLI calculator and was written in orde
 
 `make test` to run tests
 
+
+**To do**:
+
+- add more unit tests for lexing and parsing stages
+
+- randomise test input
