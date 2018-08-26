@@ -30,16 +30,14 @@ let test_add_exprs () =
        test_float
          "Addition"
          result
-         P.(string
-            |> parse_test
-            |> function | Value f -> f)
+         P.(string |> interpret |> get_float)
     )
     add_exprs
 
 let test_against_result (query,expected) =
   let actual = query
-               |> P.parse_test
-               |> function P.Value f -> f
+             |> P.interpret
+             |> P.get_float
   in
   test_float
     "Calculation expression"
