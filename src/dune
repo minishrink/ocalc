@@ -2,7 +2,7 @@
 (library
   (name calculator)
   (public_name calculator)
-  (modules calc_lexer tree calc_parser)
+  (modules calc_lexer calc_parser)
   (flags (:standard -warn-error +a-52))
   (libraries)
 )
