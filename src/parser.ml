@@ -32,6 +32,7 @@ let parse_fail fn_name token_list =
   let err = Printf.sprintf "%s [%s]" fn_name tokens in
   parse_exn err
 
+let to_n n = L.N n
 let to_num n = Num n
 let num_to_n = L.(function
     | Num n -> N n

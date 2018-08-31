@@ -6,6 +6,7 @@
     alcotest
     calculator)
   (modules
+    random_expr
     calc_expr
     calc_test)
   (flags (:standard -warn-error +a-52))

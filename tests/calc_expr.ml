@@ -1,6 +1,14 @@
 
 module C = Calculator
+module L = C.Lexer
 module P = C.Parser
+module R = Random_expr
+
+let testable pp =
+  let pp = Fmt.of_to_string pp in
+  let equal = (=) in
+  Alcotest.testable pp equal
+let token = testable L.Print.string_of_token
 
 let add_exprs =
   [ "1 + 3",           4.
@@ -46,7 +54,28 @@ let test_against_result (query,expected) =
 let test_mixed_exprs () =
   List.iter test_against_result mixed_exprs
 
+let check_lex () =
+  let expr = R.make_expr () in
+  let expr_str = expr |> String.concat " " in
+  let tkns = R.lex_string expr in
+  let lexed = (L.lex expr_str |> List.map (function | L.Monad.Success x -> x | _ -> failwith "")) in
+  print_endline expr_str;
+  let print tokens = tokens |> P.tknlst_to_str |> print_endline in
+  print tkns;
+  print lexed;
+
+  Alcotest.(check (list token))
+    "Check expressions are correctly lexed"
+    tkns lexed
+
+let test_lexing () =
+  for i = 0 to 20 do
+    ignore i;
+    check_lex ()
+  done
+
 let tests =
   [ "Test addition", `Quick, test_add_exprs
   ; "Mixed calculation expressions", `Quick, test_mixed_exprs
+  ; "Lexing expressions", `Quick, test_lexing
   ]
