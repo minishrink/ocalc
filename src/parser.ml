@@ -33,7 +33,10 @@ let parse_fail fn_name token_list =
   parse_exn err
 
 let to_num n = Num n
-let num_to_n = L.(function | Num n -> N n | e -> parse_exn (Printf.sprintf "num_to_n (%s)" (string_exp e)))
+let num_to_n = L.(function
+    | Num n -> N n
+    | e -> parse_exn (Printf.sprintf "num_to_n (%s)" (string_exp e)))
+
 let eval e =
   let rec eval_exp = function
     | Num f -> f
@@ -59,7 +62,10 @@ let binary_expr lexp rexp = function
   | L.Div -> EDiv (lexp, rexp)
   | L.Sub -> ESub (lexp, rexp)
 
-let n_to_num = L.(function | N n -> Num n | other -> parse_fail "n_to_num" [other])
+let n_to_num = L.(function
+    | N n -> Num n
+    | other -> parse_fail "n_to_num" [other])
+
 let hom_lst_to_exp op = L.(function
   | hd :: tl ->
     tl
@@ -83,27 +89,25 @@ let rec expr_of prec = L.(function
     let same_prec, remaining = expr_of prec lst in
     n::op::same_prec, remaining
   | (N n) :: rest -> [N n], rest
-  | other -> parse_fail "expr_of" other
-  )
-
+  | other -> parse_fail "expr_of" other)
 
 (* take heterogeneous list and reduce exprs of specified precedence *)
-let rec reduce_token_list for_prec = L.(function
+let rec reduce for_prec = L.(function
   | (N _) :: (O o) :: _ as lst when equal_prec for_prec o ->
     let to_reduce, remaining_tokens = expr_of (precedence o) lst in
-    reduce_token_list for_prec
+    reduce for_prec
       ((to_reduce |> hom_lst_to_exp o |> eval |> num_to_n)::remaining_tokens)
 
   | (N _ as n) :: (O _ as op) :: tokens ->
-    n::op::(reduce_token_list for_prec tokens)
+    n::op::(reduce for_prec tokens)
   | [ N _ ] as n -> n
-  | other -> parse_fail "reduce_token_list" other)
+  | other -> parse_fail "reduce" other)
 
 (* heterogeneous token list -> expr *)
 let parse token_list =
   token_list
-  |> reduce_token_list 2
-  |> reduce_token_list 1
+  |> reduce 2
+  |> reduce 1
   |> naive_expr
 
 let get_num = function
