@@ -1,5 +1,4 @@
-module L = Calc_lexer
-module PR = Printer
+module L = Lexer
 
 type exp =
   | Num  : float     -> exp

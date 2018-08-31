@@ -1,6 +1,6 @@
 
 module C = Calculator
-module P = C.Calc_parser
+module P = C.Parser
 
 let add_exprs =
   [ "1 + 3",           4.
@@ -30,14 +30,14 @@ let test_add_exprs () =
        test_float
          "Addition"
          result
-         P.(string |> interpret |> get_float)
+         P.(string |> interpret |> get_num)
     )
     add_exprs
 
 let test_against_result (query,expected) =
   let actual = query
              |> P.interpret
-             |> P.get_float
+             |> P.get_num
   in
   test_float
     "Calculation expression"

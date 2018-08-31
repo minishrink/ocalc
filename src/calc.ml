@@ -14,12 +14,12 @@ let run () =
   if String.lowercase_ascii input = "exit" then begin
     print_endline " >> exiting OCalc";
     run_program := false
-  end else C.Calc_parser.display input
+  end else C.Parser.display input
 
 let string_exn = C.(function
-    | Calc_lexer.Lexing_error e ->
+    | Lexer.Lexing_error e ->
       Printf.sprintf "Lexing error: %s" e
-    | Calc_parser.Parsing_error e ->
+    | Parser.Parsing_error e ->
       Printf.sprintf "Parsing error: %s" e
     | e -> raise e)
 
@@ -29,8 +29,8 @@ let safely_run () =
     try
       run ()
     with
-    | C.Calc_lexer.Lexing_error _
-    | C.Calc_parser.Parsing_error _ as e ->
+    | C.Lexer.Lexing_error _
+    | C.Parser.Parsing_error _ as e ->
       e |> string_exn |> print_endline
     | e -> raise e
   done
