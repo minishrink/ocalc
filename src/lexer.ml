@@ -18,8 +18,8 @@ end
 module H = Helpers
 
 exception Lexing_error of string
-let fail_lex _loc_ str =
-  raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_))
+let fail_lex fn_name str =
+  raise (Lexing_error (Printf.sprintf "Could not lex %s, see function: %s" str fn_name))
 
 type operand = Add | Mul | Sub | Div
 type token = N of float | O of operand
@@ -31,10 +31,10 @@ let get_operand str =
     | "*" -> Mul
     | "-" -> Sub
     | "/" -> Div
-    | _ -> fail_lex __LOC__ str
+    | _ -> fail_lex "to_op" str
   in
   try to_op str |> wrap_op with _ ->
-    fail_lex __LOC__ (Printf.sprintf "Failed to lex \"%s\"" str)
+    fail_lex "get_operand" str
 
 let get_number str =
   let is_int str =
@@ -50,7 +50,7 @@ let get_number str =
     else match String.split_on_char '.' str with
       | [num ; dem] when is_int num && is_int dem ->
         N (float_of_string str)
-      | _ -> fail_lex __LOC__ str
+      | _ -> fail_lex "get_number" str
   with
   | e -> raise e
 
@@ -94,7 +94,6 @@ let maybe_add_spaces string =
     | [ n ] as lst when List.mem n nums -> lst
     | [] -> []
     | hd :: tl -> hd::(space_out tl)
-    (* | other -> fail_lex __LOC__ (other |> List.map Char.escaped |> String.concat "") *)
   in
   if contains_operands_and_numbers string
   then
