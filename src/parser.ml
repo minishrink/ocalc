@@ -67,49 +67,40 @@ let n_to_num = L.(function
     | N n -> Num n
     | other -> parse_fail "n_to_num" [other])
 
-let hom_lst_to_exp op = L.(function
-  | hd :: tl ->
-    tl
-    |> List.filter (function | N _ -> true | _ -> false)
-    |> List.fold_left (fun x y -> binary_expr x (n_to_num y) op) (n_to_num hd)
-  | [] -> parse_fail "hom_lst_to_exp" [])
-
-(* take a homogeneous list and return an expression *)
-let naive_expr of_lst =
+(* deduce precedence of and then reduce first expression,
+ * return evaluated expression * remaining token list *)
+let reduce token_list =
   let open L in
-  let rec expr so_far = function
-    | (O o) :: (N n) :: rest -> expr (binary_expr so_far (to_num n) o) rest
-    | [] -> so_far
-    | other -> parse_fail "naive_expr" other
-  in match of_lst with
-  | (N n)::tkns -> expr (to_num n) tkns
-  | other -> parse_fail "naive_expr" other
+  let rec red prec exp = function
+    | (O o) :: (N n) :: lst when equal_prec prec o ->
+      red prec (binary_expr exp (to_num n) o) lst
+    | ((O _) :: _) | [] as lst -> exp |> eval, lst
+    | other -> parse_fail "reduce" other
+  in match token_list with
+  | (N n)::(O o)::tkns -> red (precedence o) (to_num n) ((O o)::tkns)
+  | [N n] -> to_num n, []
+  | other -> parse_fail "reduce" other
 
-let rec expr_of prec = L.(function
-  | (N _ as n) :: (O o as op) :: lst when equal_prec prec o ->
-    let same_prec, remaining = expr_of prec lst in
-    n::op::same_prec, remaining
-  | (N n) :: rest -> [N n], rest
-  | other -> parse_fail "expr_of" other)
-
-(* take heterogeneous list and reduce exprs of specified precedence *)
-let rec reduce for_prec = L.(function
+(* pass through entire token list
+ * extract sublist containing expressions of given precedence
+ * replace with reduced value and return list of lower precedence *)
+let rec parse_by_prec for_prec = L.(function
   | (N _) :: (O o) :: _ as lst when equal_prec for_prec o ->
-    let to_reduce, remaining_tokens = expr_of (precedence o) lst in
-    reduce for_prec
-      ((to_reduce |> hom_lst_to_exp o |> eval |> num_to_n)::remaining_tokens)
+    let exp, remaining_tokens = reduce lst in
+    parse_by_prec for_prec
+      ((num_to_n exp)::remaining_tokens)
 
   | (N _ as n) :: (O _ as op) :: tokens ->
-    n::op::(reduce for_prec tokens)
+    n::op::(parse_by_prec for_prec tokens)
   | [ N _ ] as n -> n
-  | other -> parse_fail "reduce" other)
+  | other -> parse_fail "parse_by_prec" other)
 
-(* heterogeneous token list -> expr *)
+(* successively reduce expressions in token list by descending order of precedence *)
 let parse token_list =
   token_list
-  |> reduce 2
-  |> reduce 1
-  |> naive_expr
+  |> parse_by_prec 2
+  |> parse_by_prec 1
+  |> reduce |> fst
 
 let get_num = function
   | Num i -> i
