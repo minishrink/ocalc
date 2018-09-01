@@ -16,41 +16,15 @@ module Helpers = struct
 end
 module H = Helpers
 
-module Monad = struct
-  type ('a, 'b) result =
-    | Success of 'a
-    | Failure of 'b
-
-  let succeed x = Success x
-  let fail y    = Failure y
-
-  (* (('a, 'b) result -> ('a, 'b) result) -> ('a, 'b) result -> ('a, 'b) result *)
-  let bind fn = function
-    | Success a -> begin
-        match fn a with
-        | exception e -> Failure(e)
-        | result -> succeed result
-      end
-    | Failure _ as fail -> fail
-
-  let if_fail fn = function
-    | Success _ as succ -> succ
-    | Failure b -> fn b
-
-  let (>>=) a fn = bind fn a
-  let (<-<) a fn = if_fail fn a
-end
-open Monad
-
-
 exception Lexing_error of string
-let fail_lex _loc_ str = raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_))
+let fail_lex _loc_ str =
+  raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_))
 
 type operand = Add | Mul | Sub | Div
 type token = N of float | O of operand
 
 let get_operand str =
-  let wrap_op x = succeed (O x) in
+  let wrap_op x = (O x) in
   let to_op : string -> operand = function
     | "+" -> Add
     | "*" -> Mul
@@ -72,24 +46,19 @@ let get_number str =
   in
   try
     if is_int str
-    then succeed (N (float_of_string str))
+    then N (float_of_string str)
     else match String.split_on_char '.' str with
       | [num ; dem] when is_int num && is_int dem ->
-        succeed (N (float_of_string str))
-      | _ -> fail (Lexing_error str)
+        N (float_of_string str)
+      | _ -> fail_lex __LOC__ str
   with
-  | e -> fail e
+  | e -> raise e
 
 let tokenise str =
-  get_number str
-  <-< (function
-      | Lexing_error str -> get_operand str
-      | _ -> fail_lex __LOC__ str)
+  try get_number str with
+  | Lexing_error _ -> get_operand str
+  | e -> raise e
 
-
-let return = function
-  | Success a -> a
-  | Failure f -> fail_lex __LOC__ f
 
 module Print = struct
   let string_of_operand = function
@@ -112,8 +81,4 @@ let lex str =
   |> String.split_on_char ' '
   |> List.filter (fun s -> not (s = "" || s = " "))
   |> List.map tokenise
-
-let string_of_lexed = function
-  | Success y -> Print.string_of_token y
-  | Failure _ -> fail_lex __LOC__ "cannot reach"
 
