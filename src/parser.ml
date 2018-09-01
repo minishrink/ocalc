@@ -1,5 +1,6 @@
 module L = Lexer
 
+(** Data structures **)
 type exp =
   | Num  : float     -> exp
   | EMul : exp * exp -> exp
@@ -7,6 +8,7 @@ type exp =
   | ESub : exp * exp -> exp
   | EAdd : exp * exp -> exp
 
+(** Debugging helpers **)
 let rec string_exp = function
   | Num i ->
     Printf.sprintf "Num(%s)" (string_of_float i)
@@ -24,19 +26,40 @@ let tknlst_to_str token_lst =
   |> String.concat " "
 
 exception Parsing_error of string
-
 let parse_exn str = raise (Parsing_error str)
-
 let parse_fail fn_name token_list =
   let tokens = tknlst_to_str token_list in
   let err = Printf.sprintf "%s [%s]" fn_name tokens in
   parse_exn err
+
+(** Conversion helpers **)
 
 let to_n n = L.N n
 let to_num n = Num n
 let num_to_n = L.(function
     | Num n -> N n
     | e -> parse_exn (Printf.sprintf "num_to_n (%s)" (string_exp e)))
+let n_to_num = L.(function
+    | N n -> Num n
+    | other -> parse_fail "n_to_num" [other])
+
+(** Precedence helpers **)
+
+let precedence = L.(function
+  | Add | Sub -> 0
+  | Mul -> 1
+  | Div -> 2)
+
+let equal_prec current comp =
+  (precedence comp) = current
+
+(** Evaluation **)
+
+let binary_expr lexp rexp = function
+  | L.Add -> EAdd (lexp, rexp)
+  | L.Mul -> EMul (lexp, rexp)
+  | L.Div -> EDiv (lexp, rexp)
+  | L.Sub -> ESub (lexp, rexp)
 
 let eval e =
   let rec eval_exp = function
@@ -47,25 +70,7 @@ let eval e =
     | EDiv (x,y) -> ( /. ) (eval_exp x) (eval_exp y)
   in e |> eval_exp |> to_num
 
-
-let precedence = L.(function
-  | Add | Sub -> 0
-  | Mul -> 1
-  | Div -> 2)
-
-let equal_prec current comp =
-  (precedence comp) = current
-let lowest_precedence = equal_prec 0
-
-let binary_expr lexp rexp = function
-  | L.Add -> EAdd (lexp, rexp)
-  | L.Mul -> EMul (lexp, rexp)
-  | L.Div -> EDiv (lexp, rexp)
-  | L.Sub -> ESub (lexp, rexp)
-
-let n_to_num = L.(function
-    | N n -> Num n
-    | other -> parse_fail "n_to_num" [other])
+(** Parsing logic **)
 
 (* deduce precedence of and then reduce first expression,
  * return evaluated expression * remaining token list *)
@@ -89,7 +94,6 @@ let rec parse_by_prec for_prec = L.(function
     let exp, remaining_tokens = reduce lst in
     parse_by_prec for_prec
       ((num_to_n exp)::remaining_tokens)
-
   | (N _ as n) :: (O _ as op) :: tokens ->
     n::op::(parse_by_prec for_prec tokens)
   | [ N _ ] as n -> n
@@ -98,9 +102,11 @@ let rec parse_by_prec for_prec = L.(function
 (* successively reduce expressions in token list by descending order of precedence *)
 let parse token_list =
   token_list
-  |> parse_by_prec 2
-  |> parse_by_prec 1
-  |> reduce |> fst
+  |> parse_by_prec 2 (* reduce expressions of precedence 2 *)
+  |> parse_by_prec 1 (* reduce expressions of precedence 1 *)
+  |> reduce |> fst   (* returned expr of precedence 0, now reduce *)
+
+(** CLI helpers **)
 
 let get_num = function
   | Num i -> i
