@@ -1,12 +1,9 @@
 
 module P = Parser
 
-(** Display helpers **)
-
 let get_num = function
   | P.Num i -> i
   | x -> failwith (Printf.sprintf "get_num (%s)" P.(string_exp x))
-
 
 let maybe_remove_dot s =
   let last = String.length s - 1 in
