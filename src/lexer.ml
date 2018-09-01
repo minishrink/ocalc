@@ -5,8 +5,9 @@ module Helpers = struct
 
   (* string -> char list *)
   let string_to_char_lst input =
+    let len = String.length input in
     let rec char i =
-      if i < String.length input then input.[i]::(char (i+1)) else []
+      if i < len then input.[i]::(char (i+1)) else []
     in char 0
 
   (* char tests *)
@@ -39,8 +40,7 @@ let get_number str =
   let is_int str =
     let contains_only_numbers input =
       List.fold_left (fun bool chr -> bool && H.is_num chr) true input
-    in
-    match H.string_to_char_lst str with
+    in match H.string_to_char_lst str with
     | hd :: (_::_ as num) when hd='-' -> contains_only_numbers num
     | number -> contains_only_numbers number
   in
@@ -76,8 +76,36 @@ module Print = struct
     |> String.concat " "
 end
 
+(* Handle strings with no spaces *)
+let ops = ['+';'-';'*';'/']
+let nums = (List.init 10 (fun i -> i + 48 |> Char.chr))
+let contains_operands_and_numbers string =
+  let contains_elems_of =
+    List.fold_left (fun x y -> x || (String.contains string y)) false
+  in
+  not (String.contains string ' ') && contains_elems_of ops && contains_elems_of nums
+
+(* here we handle strings without spaces *)
+let maybe_add_spaces string =
+  let space = ' ' in
+  let rec space_out = function
+    | num :: op :: rest when (List.mem num nums && List.mem op ops) ->
+      num::space::op::space::(space_out rest)
+    | [ n ] as lst when List.mem n nums -> lst
+    | [] -> []
+    | hd :: tl -> hd::(space_out tl)
+    (* | other -> fail_lex __LOC__ (other |> List.map Char.escaped |> String.concat "") *)
+  in
+  if contains_operands_and_numbers string
+  then
+    string |> H.string_to_char_lst
+    |> space_out |> List.map Char.escaped
+    |> String.concat ""
+  else string
+
 let lex str =
   str
+  |> maybe_add_spaces
   |> String.split_on_char ' '
   |> List.filter (fun s -> not (s = "" || s = " "))
   |> List.map tokenise
