@@ -112,7 +112,6 @@ let parse token_list =
 let interpret string =
   string
   |> L.lex
-  |> List.map L.return
   |> parse
   |> eval
 
