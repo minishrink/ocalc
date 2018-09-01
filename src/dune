@@ -2,7 +2,7 @@
 (library
   (name calculator)
   (public_name calculator)
-  (modules lexer parser)
+  (modules lexer parser display)
   (flags (:standard -warn-error +a-52))
   (libraries)
 )

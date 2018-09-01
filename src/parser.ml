@@ -79,7 +79,8 @@ let reduce token_list =
   let rec red prec exp = function
     | (O o) :: (N n) :: lst when equal_prec prec o ->
       red prec (binary_expr exp (to_num n) o) lst
-    | ((O _) :: _) | [] as lst -> exp |> eval, lst
+    | ((O _) :: _) | [] as lst ->
+      exp |> eval, lst
     | other -> parse_fail "reduce" other
   in match token_list with
   | (N n)::(O o)::tkns -> red (precedence o) (to_num n) ((O o)::tkns)
@@ -108,10 +109,6 @@ let parse token_list =
 
 (** CLI helpers **)
 
-let get_num = function
-  | Num i -> i
-  | x -> failwith (Printf.sprintf "get_float (%s)" (string_exp x))
-
 let interpret string =
   string
   |> L.lex
@@ -119,16 +116,4 @@ let interpret string =
   |> parse
   |> eval
 
-let maybe_remove_dot s =
-  let last = String.length s - 1 in
-  if String.contains_from s last '.'
-  then String.sub s 0 last
-  else s
-
-let display string =
-  string
-  |> interpret
-  |> get_num |> string_of_float |> maybe_remove_dot
-  |> Printf.sprintf " >> %s"
-  |> print_endline
 

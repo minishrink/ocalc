@@ -1,4 +1,6 @@
 module C = Calculator
+module P = C.Parser
+module D = C.Display
 
 let run_program = ref true
 
@@ -14,7 +16,7 @@ let run () =
   if String.lowercase_ascii input = "exit" then begin
     print_endline " >> exiting OCalc";
     run_program := false
-  end else C.Parser.display input
+  end else D.display input
 
 let string_exn = C.(function
     | Lexer.Lexing_error e ->

@@ -2,6 +2,7 @@
 module C = Calculator
 module L = C.Lexer
 module P = C.Parser
+module D = C.Display
 module R = Random_expr
 
 let testable pp =
@@ -38,14 +39,14 @@ let test_add_exprs () =
        test_float
          "Addition"
          result
-         P.(string |> interpret |> get_num)
+         (string |> P.interpret |> D.get_num)
     )
     add_exprs
 
 let test_against_result (query,expected) =
   let actual = query
              |> P.interpret
-             |> P.get_num
+             |> D.get_num
   in
   test_float
     "Calculation expression"
