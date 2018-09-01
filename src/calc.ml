@@ -1,17 +1,40 @@
+module C = Calculator
+module P = C.Parser
+module D = C.Display
 
-let _ =
-  let run_program = ref true in
+let run_program = ref true
+
+let setup () =
   let welcome_message =
-"\tTo quit OCalculator, type \"exit\" (case insensitive) or hit CTRL+C"
+    " || Type \"exit\" (case insensitive) or hit CTRL+C to quit"
   in
-  print_endline welcome_message;
+  print_endline welcome_message
 
+let run () =
+  Printf.printf " << ";
+  let input = read_line () in
+  if String.lowercase_ascii input = "exit" then begin
+    print_endline " >> exiting OCalc";
+    run_program := false
+  end else D.display input
+
+let string_exn = C.(function
+    | Lexer.Lexing_error e ->
+      Printf.sprintf "Lexing error: %s" e
+    | Parser.Parsing_error e ->
+      Printf.sprintf "Parsing error: %s" e
+    | e -> raise e)
+
+let safely_run () =
+  setup ();
   while !run_program do
-    Printf.printf " >> ";
-    let input = read_line () in
-    if String.lowercase_ascii input = "exit" then begin
-      print_endline " > exiting OCalculator";
-      run_program := false
-    end else Calculator.Calc_parser.display input
+    try
+      run ()
+    with
+    | C.Lexer.Lexing_error _
+    | C.Parser.Parsing_error _ as e ->
+      e |> string_exn |> print_endline
+    | e -> raise e
   done
 
+let _ = safely_run ()
