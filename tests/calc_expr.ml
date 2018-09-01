@@ -58,7 +58,7 @@ let check_lex () =
   let expr = R.make_expr () in
   let expr_str = expr |> String.concat " " in
   let tkns = R.lex_string expr in
-  let lexed = (L.lex expr_str |> List.map (function | L.Monad.Success x -> x | _ -> failwith "")) in
+  let lexed = (L.lex expr_str |> List.map L.return) in
   print_endline expr_str;
   let print tokens = tokens |> P.tknlst_to_str |> print_endline in
   print tkns;

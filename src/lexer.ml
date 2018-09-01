@@ -48,7 +48,6 @@ let fail_lex _loc_ str = raise (Lexing_error (Printf.sprintf "%s\n%s" str _loc_)
 
 type operand = Add | Mul | Sub | Div
 type token = N of float | O of operand
-type lex_result = Token of token | Error of string
 
 let get_operand str =
   let wrap_op x = succeed (O x) in
@@ -83,7 +82,7 @@ let get_number str =
 
 let tokenise str =
   get_number str
-  <-< (function (* FIXME I SUCK FIXME *)
+  <-< (function
       | Lexing_error str -> get_operand str
       | _ -> fail_lex __LOC__ str)
 

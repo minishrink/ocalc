@@ -115,7 +115,7 @@ let get_num = function
 let interpret string =
   string
   |> L.lex
-  |> List.map L.Monad.(function | Success x -> x | Failure _ -> failwith "fuck")
+  |> List.map L.return
   |> parse
   |> eval
 
