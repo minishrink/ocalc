@@ -23,6 +23,8 @@ let string_exn = C.(function
       Printf.sprintf "Lexing error: %s" e
     | Parser.Parsing_error e ->
       Printf.sprintf "Parsing error: %s" e
+    | Parser.Arithmetic_error e ->
+      Printf.sprintf "Arithmetic error: %s" e
     | e -> raise e)
 
 let safely_run () =
@@ -32,7 +34,8 @@ let safely_run () =
       run ()
     with
     | C.Lexer.Lexing_error _
-    | C.Parser.Parsing_error _ as e ->
+    | C.Parser.Parsing_error _
+    | C.Parser.Arithmetic_error _ as e ->
       e |> string_exn |> print_endline
     | e -> raise e
   done

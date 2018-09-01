@@ -54,11 +54,19 @@ let equal_prec current comp =
   (precedence comp) = current
 
 (** Evaluation **)
+exception Arithmetic_error of string
+let check_zero_div lexp rexp =
+  let expr = EDiv(lexp, rexp) in
+  if rexp = (Num 0.)
+  then
+    let msg = Printf.sprintf "Division by zero (%s)" (string_exp expr) in
+    raise (Arithmetic_error msg)
+  else expr
 
 let binary_expr lexp rexp = function
   | L.Add -> EAdd (lexp, rexp)
   | L.Mul -> EMul (lexp, rexp)
-  | L.Div -> EDiv (lexp, rexp)
+  | L.Div -> check_zero_div lexp rexp
   | L.Sub -> ESub (lexp, rexp)
 
 let eval e =
