@@ -54,11 +54,19 @@ let equal_prec current comp =
   (precedence comp) = current
 
 (** Evaluation **)
+exception Arithmetic_error of string
+let check_zero_div lexp rexp =
+  let expr = EDiv(lexp, rexp) in
+  if rexp = (Num 0.)
+  then
+    let msg = Printf.sprintf "Division by zero (%s)" (string_exp expr) in
+    raise (Arithmetic_error msg)
+  else expr
 
 let binary_expr lexp rexp = function
   | L.Add -> EAdd (lexp, rexp)
   | L.Mul -> EMul (lexp, rexp)
-  | L.Div -> EDiv (lexp, rexp)
+  | L.Div -> check_zero_div lexp rexp
   | L.Sub -> ESub (lexp, rexp)
 
 let eval e =
@@ -66,7 +74,7 @@ let eval e =
     | Num f -> f
     | EMul (x,y) -> ( *. ) (eval_exp x) (eval_exp y)
     | EAdd (x,y) -> ( +. ) (eval_exp x) (eval_exp y)
-    | ESub (x,y) -> ( -. )  (eval_exp x) (eval_exp y)
+    | ESub (x,y) -> ( -. ) (eval_exp x) (eval_exp y)
     | EDiv (x,y) -> ( /. ) (eval_exp x) (eval_exp y)
   in e |> eval_exp |> to_num
 
@@ -101,14 +109,14 @@ let rec parse_by_prec for_prec = L.(function
   | other -> parse_fail "parse_by_prec" other)
 
 (* successively reduce expressions in token list by descending order of precedence *)
-let parse token_list =
+let parse token_list = (* token list -> chain expr *)
   token_list
   |> parse_by_prec 2 (* reduce expressions of precedence 2 *)
   |> parse_by_prec 1 (* reduce expressions of precedence 1 *)
   |> reduce |> fst   (* returned expr of precedence 0, now reduce *)
 
-(** CLI helpers **)
 
+(* string -> token list -> evaluated expr *)
 let interpret string =
   string
   |> L.lex
