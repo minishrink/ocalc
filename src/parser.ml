@@ -10,8 +10,7 @@ type exp =
 
 (** Debugging helpers **)
 let rec string_exp = function
-  | Num i ->
-    Printf.sprintf "Num(%s)" (string_of_float i)
+  | Num i -> (string_of_float i) |> L.Print.maybe_remove_dot
   | EMul (exp, f) ->
     Printf.sprintf "EMul(%s, %s)" (string_exp exp) (string_exp f)
   | EAdd (lexp, rexp) ->
@@ -121,5 +120,4 @@ let interpret string =
   |> L.lex
   |> parse
   |> eval
-
 

@@ -1,15 +1,9 @@
-
+module L = Lexer
 module P = Parser
 
 let get_num = function
   | P.Num i -> i
   | x -> failwith (Printf.sprintf "get_num (%s)" P.(string_exp x))
-
-let maybe_remove_dot s =
-  let last = String.length s - 1 in
-  if String.contains_from s last '.'
-  then String.sub s 0 last
-  else s
 
 let handle_float f =
   let undefined_value () = raise P.(Arithmetic_error "Undefined value") in
@@ -27,7 +21,7 @@ let display string =
   |> P.interpret
   |> get_num
   |> handle_float
-  |> string_of_float |> maybe_remove_dot
+  |> string_of_float |> L.Print.maybe_remove_dot
   |> Printf.sprintf " >> %s"
   |> print_endline
 

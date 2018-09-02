@@ -67,9 +67,15 @@ module Print = struct
     | Sub -> "-"
     | Div -> "/"
 
+  let maybe_remove_dot s =
+    let last = String.length s - 1 in
+    if String.contains_from s last '.'
+    then String.sub s 0 last
+    else s
+
   let string_of_token = function
     | (O x) -> string_of_operand x
-    | (N x) -> string_of_float x
+    | (N x) -> string_of_float x |> maybe_remove_dot
 
   let tknlst_to_str of_list =
     List.map string_of_token of_list
