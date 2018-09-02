@@ -25,12 +25,11 @@ let tknlst_to_str token_lst =
   List.map L.Print.string_of_token token_lst
   |> String.concat " "
 
-exception Parsing_error of string
-let parse_exn str = raise (Parsing_error str)
+exception Parsing_error of string * string
+let parse_exn fn_name str = raise (Parsing_error (fn_name, str))
 let parse_fail fn_name token_list =
   let tokens = tknlst_to_str token_list in
-  let err = Printf.sprintf "%s [%s]" fn_name tokens in
-  parse_exn err
+  parse_exn fn_name tokens
 
 (** Conversion helpers **)
 
@@ -38,10 +37,10 @@ let to_n n = L.N n
 let to_num n = Num n
 let num_to_n = L.(function
     | Num n -> N n
-    | e -> parse_exn (Printf.sprintf "num_to_n (%s)" (string_exp e)))
+    | e -> parse_exn "num_to_n" (string_exp e))
 let n_to_num = L.(function
     | N n -> Num n
-    | other -> parse_fail "n_to_num" [other])
+    | other -> parse_exn "n_to_num" L.Print.(string_of_token other))
 
 (** Precedence helpers **)
 
@@ -52,14 +51,15 @@ let precedence = L.(function
 let equal_prec current comp =
   (precedence comp) = current
 
-(** Evaluation **)
 exception Arithmetic_error of string
+
+(** Evaluation **)
 let check_zero_div lexp rexp =
   let expr = EDiv(lexp, rexp) in
   if rexp = (Num 0.)
   then
-    let msg = Printf.sprintf "Division by zero (%s)" (string_exp expr) in
-    raise (Arithmetic_error msg)
+    let expr = Printf.sprintf "%s / 0" (string_exp lexp) in
+    raise (Arithmetic_error expr)
   else expr
 
 let binary_expr lexp rexp = function

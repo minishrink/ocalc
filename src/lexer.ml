@@ -17,9 +17,9 @@ module Helpers = struct
 end
 module H = Helpers
 
-exception Lexing_error of string
+exception Lexing_error of string * string
 let fail_lex fn_name str =
-  raise (Lexing_error (Printf.sprintf "Could not lex %s, see function: %s" str fn_name))
+  raise (Lexing_error (fn_name, str))
 
 type operand = Add | Mul | Sub | Div
 type token = N of float | O of operand
