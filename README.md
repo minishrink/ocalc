@@ -13,6 +13,7 @@ It currently only handles simple arithmetic (addition, multiplication, subtracti
 
 - `ocaml` >= 4.05.0
 
+
 The following libraries:
 
 - `alcotest`
@@ -20,11 +21,11 @@ The following libraries:
 
 **Instructions**:
 
-`make` to build project
+`make` builds project
 
-`make calc` to build and run calculator
+`make calc` builds and runs calculator
 
-`make test` to run tests
+`make test` runs tests
 
 
 **To do**:
