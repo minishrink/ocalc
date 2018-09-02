@@ -5,10 +5,12 @@ module D = C.Display
 let run_program = ref true
 let debug = ref false
 
-let setup () =
+let menu () =
   let welcome_message =
-    [ " || Type \"exit\" (case insensitive) or hit CTRL+C to quit"
-    ; " || To toggle debug mode, enter \"debug-[on | off]\""
+    [ " || Enter keyword and hit enter for the following options:"
+    ; "    - \"help\" - repeat these options"
+    ; "    - \"debug-[on | off]\" - error reporting includes name of function that raised exn"
+    ; "    - \"exit\" - quit this application"
     ] |> String.concat "\n"
   in
   print_endline welcome_message
@@ -17,13 +19,11 @@ let run () =
   Printf.printf " << ";
   let input = read_line () in
   match String.lowercase_ascii input with
-  | "exit" -> begin
-      print_endline " >> exiting OCalc";
-      run_program := false
-    end
+  | "exit"      -> run_program := false
   | "debug-on"  -> debug := true
   | "debug-off" -> debug := false
-  | input -> D.display input
+  | "help"      -> menu ()
+  | input       -> D.display input
 
 let maybe_debug fn_name =
   if !debug then ", see function " ^ fn_name else ""
@@ -38,7 +38,7 @@ let string_exn = C.(function
     | e -> raise e)
 
 let safely_run () =
-  setup ();
+  menu ();
   while !run_program do
     try
       run ()
