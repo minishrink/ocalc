@@ -7,7 +7,9 @@ let debug = ref false
 
 let setup () =
   let welcome_message =
-    " || Type \"exit\" (case insensitive) or hit CTRL+C to quit"
+    [ " || Type \"exit\" (case insensitive) or hit CTRL+C to quit"
+    ; " || To toggle debug mode, enter \"debug-[on | off]\""
+    ] |> String.concat "\n"
   in
   print_endline welcome_message
 
@@ -31,8 +33,8 @@ let string_exn = C.(function
       Printf.sprintf "Could not lex \"%s\"%s" s (maybe_debug fn)
     | Parser.Parsing_error (fn, s) ->
       Printf.sprintf "Could not parse \"%s\"%s" s (maybe_debug fn)
-    | Parser.Arithmetic_error e
-      -> "Cannot divide by zero: " ^ e
+    | Parser.Arithmetic_error e ->
+      Printf.sprintf "Could not calculate: " ^ e
     | e -> raise e)
 
 let safely_run () =

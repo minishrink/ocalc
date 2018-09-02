@@ -57,7 +57,7 @@ let check_zero_div lexp rexp =
   let expr = EDiv(lexp, rexp) in
   if rexp = (Num 0.)
   then
-    let expr = Printf.sprintf "%s / 0" (string_exp lexp) in
+    let expr = Printf.sprintf "Zero division (%s/0)" (string_exp lexp) in
     raise (Arithmetic_error expr)
   else expr
 
