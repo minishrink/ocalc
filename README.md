@@ -1,29 +1,34 @@
 
 ## OCalc
 
-This program simply builds an interactive CLI calculator and was written in order for me to learn about lexers and parsers by handwriting them.
+This is a simple CLI calculator made as an exercise in writing a simple lexer and parser.
+
+It currently only handles simple arithmetic (addition, multiplication, subtraction, division).
 
 ### Build instructions
 
 **Requirements**:
 
-  `opam` >= 1.2
+- `opam` >= 1.2
 
-  `ocaml` >= 4.05.0
+- `ocaml` >= 4.05.0
 
-  The following libraries:
-  `alcotest`
+The following libraries:
+
+- `alcotest`
 
 
 **Instructions**:
 
-`make run` to try out the calculator (exit by typing *EXIT*)
+`make` to build project
+
+`make calc` to build and run calculator
 
 `make test` to run tests
 
 
 **To do**:
 
-- add more unit tests for lexing and parsing stages
+- unit test individual parsing stages
 
-- randomise test input
+- add more tests with randomised input
