@@ -52,7 +52,8 @@ let get_number str =
         N (float_of_string str)
       | _ -> fail_lex "get_number" str
   with
-  | e -> raise e
+  | _ -> fail_lex "get_number" str
+
 
 let tokenise str =
   try get_number str with
