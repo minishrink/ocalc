@@ -47,8 +47,7 @@ let n_to_num = L.(function
 
 let precedence = L.(function
   | Add | Sub -> 0
-  | Mul -> 1
-  | Div -> 2)
+  | Mul | Div -> 1)
 
 let equal_prec current comp =
   (precedence comp) = current
