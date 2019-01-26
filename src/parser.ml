@@ -22,11 +22,17 @@ let rec string_exp = function
     Printf.sprintf "EDiv(%s, %s)" (string_exp lexp) (string_exp rexp)
 
 let tknlst_to_str token_lst =
-  List.map L.Print.string_of_token token_lst
+  token_lst
+  |> List.map L.Print.string_of_token
   |> String.concat " "
 
+
+(** Exception handling **)
+
 exception Parsing_error of string
+
 let parse_exn str = raise (Parsing_error str)
+
 let parse_fail fn_name token_list =
   let tokens = tknlst_to_str token_list in
   let err = Printf.sprintf "%s [%s]" fn_name tokens in
@@ -54,6 +60,7 @@ let equal_prec current comp =
 
 (** Evaluation **)
 exception Arithmetic_error of string
+
 let check_zero_div lexp rexp =
   let expr = EDiv(lexp, rexp) in
   if rexp = (Num 0.)
@@ -67,6 +74,9 @@ let binary_expr lexp rexp = function
   | L.Mul -> EMul (lexp, rexp)
   | L.Div -> check_zero_div lexp rexp
   | L.Sub -> ESub (lexp, rexp)
+
+
+(** Computation occurs here **)
 
 let eval e =
   let rec eval_exp = function
@@ -112,7 +122,8 @@ let parse token_list = (* token list -> chain expr *)
   token_list
   |> parse_by_prec 2 (* reduce expressions of precedence 2 *)
   |> parse_by_prec 1 (* reduce expressions of precedence 1 *)
-  |> reduce |> fst   (* returned expr of precedence 0, now reduce *)
+  |> reduce
+  |> fst   (* reduce to simplest expr *)
 
 
 (* string -> token list -> evaluated expr *)
@@ -121,5 +132,4 @@ let interpret string =
   |> L.lex
   |> parse
   |> eval
-
 
