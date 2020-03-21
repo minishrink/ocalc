@@ -4,19 +4,24 @@ module D = C.Display
 
 let run_program = ref true
 
+let exit_program () = run_program := false
+
 let setup () =
-  let welcome_message =
-    " || Type \"exit\" (case insensitive) or hit CTRL+C to quit"
-  in
-  print_endline welcome_message
+  let cutoff_bar = " --------------------------------------------------------" in
+  let title_text = " ||      OCALC" in
+  Printf.printf
+    "%s\n%s\n%s\n%s Type \"exit\" (case insensitive) or hit CTRL+C to quit\n%s\n"
+    cutoff_bar title_text cutoff_bar D.prefix_msg cutoff_bar
 
 let run () =
-  Printf.printf " << ";
+  Printf.printf "%s" D.prefix_input;
   let input = read_line () in
-  if String.lowercase_ascii input = "exit" then begin
-    print_endline " >> exiting OCalc";
-    run_program := false
-  end else D.display input
+  if String.lowercase_ascii input = "exit"
+  then begin
+    print_endline D.(display_string prefix_msg "exiting OCalc");
+    exit_program ()
+  end else
+    D.calculate input
 
 let string_exn = C.(function
     | Lexer.Lexing_error e ->
